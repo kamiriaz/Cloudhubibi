@@ -14,7 +14,7 @@ const port = process.env.PORT || 3001;
 // Middleware
 // ---------------------
 app.use(cors({
-  origin: '*', // ⚠️ For testing only — restrict in production
+  origin: '*',
   credentials: true
 }));
 app.use(express.json());
@@ -110,7 +110,7 @@ Professional, strategic, results-oriented. Highlight ROI, revenue growth, scalab
 // ---------------------
 // Catch-all route for SPA (non-API)
 // ---------------------
-app.get(/^\/(?!api).*/, (req, res) => {
+app.get('/{*any}', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 

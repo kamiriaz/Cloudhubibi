@@ -20,48 +20,17 @@ function App() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // Reset buttons after bot responds
-  useEffect(() => {
-    if (!isTyping) {
-      setShowOptions(true);
-    }
-  }, [messages, isTyping]);
-
   const handleOptionClick = (option: string) => {
-    // Temporarily hide buttons while bot is "thinking"
-    setShowOptions(false);
-
-    switch (option) {
-      case "Run a 2-Minute GTM Mini-Scan":
-        sendMessage("I’d be happy to run a quick GTM Mini-Scan. Could you provide a bit of context about your current GTM strategy?");
-        break;
-      case "Diagnose My Revenue Leaks":
-        sendMessage("Let’s identify potential revenue leaks. Can you share details about your sales process and current challenges?");
-        break;
-      case "Architect My GTM System":
-        sendMessage("I can help you design a clear GTM blueprint. What are your key goals and target markets?");
-        break;
-      case "Scale My Operations":
-        sendMessage("Scaling operations requires efficiency and visibility. Can you describe your current team setup and tools?");
-        break;
-      case "Book a Free Consultation":
-        sendMessage("I'd be happy to connect you with our team. Could you please share your company name, industry, and main GTM challenge you're facing?");
-        break;
-      case "Learn About CloudHubibi's Approach":
-        sendMessage("CloudHubibi builds GTM strategies, CRM architecture, and funnel systems that convert demand into revenue. Would you like an overview?");
-        break;
-      default:
-        sendMessage(option);
-    }
+    setShowOptions(false); // Hide options permanently
+    sendMessage(option);   // Continue chat
   };
 
   const options = [
-    "Run a 2-Minute GTM Mini-Scan",
-    "Diagnose My Revenue Leaks",
-    "Architect My GTM System",
-    "Scale My Operations",
-    "Book a Free Consultation",
-    "Learn About CloudHubibi's Approach"
+    "GTM Strategy",
+    "Market Research",
+    "Sales Process",
+    "Case Studies",
+    "Book Consultation"
   ];
 
   return (
@@ -82,8 +51,8 @@ function App() {
                     timestamp={message.timestamp}
                   />
 
-                  {/* Show buttons below each bot message */}
-                  {message.isBot && showOptions && (
+                  {/* Show options only below the first bot message */}
+                  {index === 0 && message.isBot && showOptions && (
                     <div className="flex flex-col mt-4 space-y-3 items-center">
                       {options.map((opt) => (
                         <button

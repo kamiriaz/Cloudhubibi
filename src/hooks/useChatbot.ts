@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { ChatApiService } from '../services/chatApi';
 
 export interface Message {
@@ -22,11 +22,14 @@ We help businesses accelerate growth through strategic market entry and expansio
     }
   ]);
 
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages; // keep latest messages for async calls
+
   const [isTyping, setIsTyping] = useState(false);
   const [showOptions, setShowOptions] = useState(true);
   const [chatApiService] = useState(() => new ChatApiService());
 
-  const sendMessage = useCallback((text: string) => {
+  const sendMessage = useCallback(async (text: string) => {
     const userMessage: Message = {
       id: Date.now().toString(),
       text,
@@ -39,26 +42,43 @@ We help businesses accelerate growth through strategic market entry and expansio
 
     if (showOptions) setShowOptions(false);
 
-    chatApiService.sendMessage(text, messages).then(response => {
+    try {
+      const conversation = messagesRef.current.map(m => ({
+        role: m.isBot ? 'assistant' : 'user',
+        content: m.text
+      }));
+
+      const response = await chatApiService.sendMessage(text, conversation);
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: response,
         isBot: true,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
+
       setMessages(prev => [...prev, botMessage]);
-      setIsTyping(false);
-    }).catch(error => {
+
+    } catch (error) {
       console.error('Chat error:', error);
-      setMessages(prev => [...prev, {
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: "I apologize, but I'm having trouble connecting to the chat service.",
         isBot: true,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-      setIsTyping(false);
-    });
-  }, [chatApiService, messages, showOptions]);
+      };
+      setMessages(prev => [...prev, errorMessage]);
 
-  return { messages, isTyping, sendMessage, showOptions, clearHistory: () => chatApiService.clearHistory() };
+    } finally {
+      setIsTyping(false);
+    }
+  }, [chatApiService, showOptions]);
+
+  return {
+    messages,
+    isTyping,
+    sendMessage,
+    showOptions,
+    clearHistory: () => chatApiService.clearHistory()
+  };
 }

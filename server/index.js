@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import OpenAI from 'openai';
 
 // ---------------------
@@ -26,13 +27,15 @@ const openai = new OpenAI({
 });
 
 // ---------------------
-// Serve frontend (Vite build)
+// Frontend: Serve Vite build
 // ---------------------
-const __dirname = path.resolve();
-app.use(express.static(path.join(__dirname, '../dist'))); // adjust if needed
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-app.get('*', (req, res, next) => {
-  // Only send index.html for non-API requests
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Catch-all for non-API routes (React SPA routing)
+app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
   } else {
@@ -115,7 +118,8 @@ app.post('/api/chat', async (req, res) => {
       temperature: 0.7
     });
 
-    const botReply = response.choices[0]?.message?.content || "I'm here to help with your GTM strategy.";
+    const botReply = response.choices[0]?.message?.content || 
+      "I'm here to help with your GTM strategy.";
 
     res.json({ 
       message: botReply,
@@ -143,7 +147,7 @@ app.post('/api/chat', async (req, res) => {
 // Start server
 // ---------------------
 app.listen(port, () => {
-  console.log(`🚀 Backend + Frontend running on http://localhost:${port}`);
+  console.log(`🚀 Backend + Frontend running on port ${port}`);
   console.log(`📡 Health check: http://localhost:${port}/api/health`);
   console.log(`🔑 OpenAI API Key configured: ${process.env.OPENAI_API_KEY ? "Yes" : "No"}`);
 });

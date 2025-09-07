@@ -20,28 +20,24 @@ app.use(cors({
 app.use(express.json());
 
 // ---------------------
-// OpenAI
+// Initialize OpenAI
 // ---------------------
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// ---------------------
-// Frontend: Serve Vite build
-// ---------------------
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const distPath = path.join(__dirname, '../dist');
-app.use(express.static(distPath));
-
-// Catch-all for SPA routes (non-API)
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 // ---------------------
-// Health check
+// Serve Vite build
+// ---------------------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// ---------------------
+// Health check endpoint
 // ---------------------
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server running' });
+  res.json({ status: 'ok', message: 'Server is running' });
 });
 
 // ---------------------
@@ -51,22 +47,50 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { message, conversation = [] } = req.body;
 
-    if (!message) return res.status(400).json({ error: 'Message is required' });
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    const systemPrompt = {
+      role: "system",
+      content: `
+You are a professional AI assistant for CloudHubibi (https://www.cloudhubibi.com/), 
+a leading Go-to-Market Strategy consultancy firm.
+
+🎯 Mission:
+Help potential clients understand how CloudHubibi accelerates business growth through 
+strategic market entry, expansion, and GTM excellence.
+
+✅ Services to highlight:
+- Go-to-Market Strategy Development
+- Market Research & Analysis
+- Product Positioning & Messaging
+- Sales Strategy & Process Optimization
+- Digital Marketing & Lead Generation
+- Business Growth Consulting
+- Market Entry Planning
+
+📌 Rules:
+- Keep answers concise, strategic, and business-focused.
+- Always link user challenges to CloudHubibi’s value proposition.
+- Pricing: packages customized by business size, industry, GTM challenges.
+- Case studies: mention 2–5x growth through GTM implementation.
+- Book consultation: reply with request for company name, industry, GTM challenge.
+- Redirect any off-topic questions to CloudHubibi’s services.
+
+🎙️ Tone:
+Professional, strategic, results-oriented. Highlight ROI, revenue growth, scalability, competitive advantage.
+`
+    };
 
     const messages = [
-      {
-        role: 'system',
-        content: `
-You are a professional AI assistant for CloudHubibi.
-Keep answers concise, business-focused, and link to CloudHubibi’s services.
-`
-      },
+      systemPrompt,
       ...conversation,
-      { role: 'user', content: message }
+      { role: "user", content: message }
     ];
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: "gpt-4o-mini",
       messages,
       max_tokens: 500,
       temperature: 0.7
@@ -77,15 +101,24 @@ Keep answers concise, business-focused, and link to CloudHubibi’s services.
     res.json({ message: botReply, success: true });
 
   } catch (error) {
-    console.error('OpenAI error:', error?.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to get AI response', success: false });
+    console.error('OpenAI API error:', error?.response?.data || error.message);
+    const status = error?.response?.status === 429 ? 429 : 500;
+    res.status(status).json({ error: error.message || 'Failed to get AI response', success: false });
   }
+});
+
+// ---------------------
+// Catch-all route for SPA (non-API)
+// ---------------------
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
 // ---------------------
 // Start server
 // ---------------------
 app.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
-  console.log(`📡 Health: http://localhost:${port}/api/health`);
+  console.log(`🚀 Backend + Frontend running on port ${port}`);
+  console.log(`📡 Health check: http://localhost:${port}/api/health`);
+  console.log(`🔑 OpenAI API Key configured: ${process.env.OPENAI_API_KEY ? "Yes" : "No"}`);
 });

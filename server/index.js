@@ -1,19 +1,19 @@
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
+import path from 'path';
 import OpenAI from 'openai';
 
 // ---------------------
 // Configuration
 // ---------------------
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 // ---------------------
 // Middleware
 // ---------------------
 app.use(cors({
-  origin: '*', // ⚠️ For testing only — restrict to your domain in production
+  origin: '*', // ⚠️ For testing only — restrict in production
   credentials: true
 }));
 app.use(express.json());
@@ -23,6 +23,21 @@ app.use(express.json());
 // ---------------------
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
+});
+
+// ---------------------
+// Serve frontend (Vite build)
+// ---------------------
+const __dirname = path.resolve();
+app.use(express.static(path.join(__dirname, '../dist'))); // adjust if needed
+
+app.get('*', (req, res, next) => {
+  // Only send index.html for non-API requests
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  } else {
+    next();
+  }
 });
 
 // ---------------------
@@ -89,7 +104,7 @@ app.post('/api/chat', async (req, res) => {
     // Maintain conversation history
     const messages = [
       systemPrompt,
-      ...conversation, // should contain [{ role: "user"|"assistant", content: string }]
+      ...conversation,
       { role: "user", content: message }
     ];
 
@@ -128,7 +143,7 @@ app.post('/api/chat', async (req, res) => {
 // Start server
 // ---------------------
 app.listen(port, () => {
-  console.log(`🚀 Backend server running on http://localhost:${port}`);
+  console.log(`🚀 Backend + Frontend running on http://localhost:${port}`);
   console.log(`📡 Health check: http://localhost:${port}/api/health`);
   console.log(`🔑 OpenAI API Key configured: ${process.env.OPENAI_API_KEY ? "Yes" : "No"}`);
 });

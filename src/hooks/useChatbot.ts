@@ -23,7 +23,11 @@ We help businesses accelerate growth through strategic market entry and expansio
   ]);
 
   const [isTyping, setIsTyping] = useState(false);
+<<<<<<< HEAD
   const [showOptions, setShowOptions] = useState(true); // show initial options only once
+=======
+  const [showOptions, setShowOptions] = useState(true);
+>>>>>>> 07d93af (Updated bot code + built dist folder for deployment)
   const [chatApiService] = useState(() => new ChatApiService());
 
   const sendMessage = useCallback((text: string) => {
@@ -37,17 +41,25 @@ We help businesses accelerate growth through strategic market entry and expansio
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
 
+<<<<<<< HEAD
     // Hide initial options after first user action
     if (showOptions) setShowOptions(false);
 
     // Send message to AI backend
     chatApiService.sendMessage(text, messages).then((response) => {
       const botResponse: Message = {
+=======
+    if (showOptions) setShowOptions(false);
+
+    chatApiService.sendMessage(text, messages).then(response => {
+      const botMessage: Message = {
+>>>>>>> 07d93af (Updated bot code + built dist folder for deployment)
         id: (Date.now() + 1).toString(),
         text: response,
         isBot: true,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
+<<<<<<< HEAD
 
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
@@ -60,10 +72,23 @@ We help businesses accelerate growth through strategic market entry and expansio
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, errorResponse]);
+=======
+      setMessages(prev => [...prev, botMessage]);
+      setIsTyping(false);
+    }).catch(error => {
+      console.error('Chat error:', error);
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        text: "I apologize, but I'm having trouble connecting to the chat service.",
+        isBot: true,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
+>>>>>>> 07d93af (Updated bot code + built dist folder for deployment)
       setIsTyping(false);
     });
   }, [chatApiService, messages, showOptions]);
 
+<<<<<<< HEAD
   return {
     messages,
     isTyping,
@@ -71,4 +96,7 @@ We help businesses accelerate growth through strategic market entry and expansio
     showOptions,
     clearHistory: () => chatApiService.clearHistory()
   };
+=======
+  return { messages, isTyping, sendMessage, showOptions, clearHistory: () => chatApiService.clearHistory() };
+>>>>>>> 07d93af (Updated bot code + built dist folder for deployment)
 }

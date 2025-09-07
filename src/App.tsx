@@ -7,10 +7,8 @@ import { useChatbot } from './hooks/useChatbot';
 
 function App() {
   const customerName = "CloudHubibi";
-  const { messages, isTyping, sendMessage } = useChatbot(customerName);
+  const { messages, isTyping, sendMessage, showOptions } = useChatbot(customerName);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const [showOptions, setShowOptions] = useState(true);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -21,17 +19,10 @@ function App() {
   }, [messages, isTyping]);
 
   const handleOptionClick = (option: string) => {
-    setShowOptions(false); // Hide options permanently
-    sendMessage(option);   // Continue chat
+    sendMessage(option);
   };
 
-  const options = [
-    "GTM Strategy",
-    "Market Research",
-    "Sales Process",
-    "Case Studies",
-    "Book Consultation"
-  ];
+  const options = ["GTM Strategy", "Market Research", "Sales Process", "Case Studies", "Book Consultation"];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -48,10 +39,9 @@ function App() {
                   <ChatMessage
                     message={message.text}
                     isBot={message.isBot}
-                    timestamp={message.timestamp}
                   />
 
-                  {/* Show options only below the first bot message */}
+                  {/* Show initial buttons only once */}
                   {index === 0 && message.isBot && showOptions && (
                     <div className="flex flex-col mt-4 space-y-3 items-center">
                       {options.map((opt) => (

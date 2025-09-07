@@ -9,30 +9,22 @@ export interface ChatResponse {
   error?: string;
 }
 
-// Point frontend to backend running on port 3001
-const API_BASE_URL = 'http://localhost:3001';
+// Use the Render URL or environment variable for production
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export class ChatApiService {
   private conversation: Array<{ role: string; content: string }> = [];
 
-  async sendMessage(message: string): Promise<string> {
+  async sendMessage(message: string, conversationOverride?: Array<{ role: string; content: string }>): Promise<string> {
     try {
-      // Check if server is reachable first
-      const isHealthy = await this.checkServerHealth();
-      if (!isHealthy) {
-        throw new Error(
-          'Backend server is not running. Please start the server with "npm run server" or "npm run dev:full"'
-        );
-      }
+      const conversation = conversationOverride || this.conversation;
 
       const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message,
-          conversation: this.conversation
+          conversation
         })
       });
 
@@ -55,24 +47,12 @@ export class ChatApiService {
 
     } catch (error) {
       console.error('Chat API error:', error);
-      if (error instanceof Error) {
-        throw error;
-      }
+      if (error instanceof Error) throw error;
       throw new Error('Unable to connect to chat service. Please try again.');
     }
   }
 
   clearHistory(): void {
     this.conversation = [];
-  }
-
-  async checkServerHealth(): Promise<boolean> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/health`);
-      return response.ok;
-    } catch (error) {
-      console.error('Health check failed:', error);
-      return false;
-    }
   }
 }
